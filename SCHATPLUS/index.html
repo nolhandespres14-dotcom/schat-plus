@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c3b">
+  <meta name="description" content="schat+ — compare plusieurs IA et retrouve Poképlx dans le même espace.">
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="stylesheet" href="styles.css">
+  <title>schat+ × Poképlx</title>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-ball">◉</span><span>schat<span>+</span></span></div>
+      <div class="menu-title">MENU</div>
+      <button class="menu-item active" data-view="chat">💬 <span>schat+</span></button>
+      <div class="menu-title">IA</div>
+      <div id="aiMenu"></div>
+      <div class="menu-title">PROJETS</div>
+      <button class="menu-item" data-view="pokeplex">🃏 <span>Poképlx</span></button>
+      <div class="sidebar-bottom">
+        <a class="menu-item admin-link" href="admin.html">🛡️ <span>Administration</span></a>
+        <button id="logoutBtn" class="menu-item hidden">↪️ <span>Se déconnecter</span></button>
+      </div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <div>
+          <div class="eyebrow">ESPACE IA</div>
+          <h1 id="viewTitle">schat+</h1>
+        </div>
+        <div class="account-chip" id="accountChip">👤 Visiteur</div>
+      </header>
+
+      <section id="authGate" class="auth-gate hidden">
+        <div class="auth-card">
+          <div class="auth-icon">✨</div>
+          <h2>Bienvenue sur schat+</h2>
+          <p>Connecte-toi pour conserver tes questions et comparer les réponses des IA.</p>
+          <div class="auth-actions">
+            <button class="primary-btn" id="showLogin">Se connecter</button>
+            <button class="secondary-btn" id="showRegister">Créer un compte</button>
+          </div>
+          <div id="authForms"></div>
+        </div>
+      </section>
+
+      <section id="chatView" class="view">
+        <div class="chat-layout">
+          <section class="panel questions-panel">
+            <div class="panel-head">
+              <div><div class="eyebrow">HISTORIQUE</div><h2>Tes questions</h2></div>
+              <span class="count" id="questionCount">0</span>
+            </div>
+            <div id="questionsList" class="question-list"></div>
+          </section>
+
+          <section class="panel response-panel">
+            <div class="response-head">
+              <div>
+                <div class="eyebrow" id="selectedAiLabel">RÉPONSE</div>
+                <h2 id="responseTitle">Sélectionne une question</h2>
+              </div>
+              <span class="status-dot" id="answerStatus"></span>
+            </div>
+            <div id="responseBox" class="response-box">
+              <div class="empty-response">
+                <div class="big-icon">💬</div>
+                <strong>Pose ta première question</strong>
+                <span>Choisis ensuite une IA dans le menu de gauche.</span>
+              </div>
+            </div>
+          </section>
+        </div>
+
+        <div class="composer panel">
+          <textarea id="questionInput" rows="2" placeholder="Pose une question…"></textarea>
+          <button id="sendQuestion" class="send-btn">Envoyer ↑</button>
+        </div>
+      </section>
+
+      <section id="pokeplexView" class="view hidden">
+        <div class="pokeplex-hero">
+          <div>
+            <div class="eyebrow">PROJET</div>
+            <h2>🃏 Poképlx</h2>
+            <p>Ta boutique de cartes Pokémon est maintenant directement dans schat+.</p>
+          </div>
+          <a href="#pokeplex-cards" class="primary-btn">Voir les cartes</a>
+        </div>
+        <div class="notice-card">
+          <strong>Comment ça marche ?</strong>
+          <span>Choisis une carte → « Je vais l’acheter » → réserve-la → viens la chercher et paie sur place.</span>
+        </div>
+        <div class="section-heading" id="pokeplex-cards">
+          <div><div class="eyebrow">CATALOGUE</div><h2>Cartes disponibles</h2></div>
+          <div class="filters">
+            <input id="search" type="search" placeholder="Rechercher une carte…">
+            <select id="statusFilter"><option value="available">Disponibles</option><option value="all">Toutes</option><option value="reserved">Réservées</option><option value="sold">Vendues</option></select>
+          </div>
+        </div>
+        <div id="cardsGrid" class="cards-grid"></div>
+        <div id="emptyState" class="empty-state hidden">Aucune carte ne correspond à ta recherche.</div>
+        <div class="pickup-card">
+          <div><div class="eyebrow">RAMASSAGE</div><h2>Paiement sur place</h2><p>Après réservation, les informations de ramassage s’affichent.</p></div>
+          <div class="address-box">966 rue La Palme<br>Québec, Saint-Lin</div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="buyDialog" class="modal">
+    <form method="dialog" class="modal-card" id="buyForm">
+      <button class="close-btn" value="cancel">×</button>
+      <div class="eyebrow">RÉSERVER</div>
+      <h2 id="dialogTitle">Je vais l’acheter</h2>
+      <p id="dialogPrice" class="dialog-price"></p>
+      <input type="hidden" id="dialogProductId">
+      <label>Ton nom<input id="buyerName" required maxlength="80" placeholder="Ex. Alex"></label>
+      <label>Ton numéro de téléphone<input id="buyerPhone" required maxlength="40" placeholder="Ex. 514-555-1234"></label>
+      <button id="reserveBtn" class="primary-btn" type="submit">Confirmer la réservation</button>
+      <p class="small-note">Paiement en argent comptant lors du ramassage.</p>
+    </form>
+  </dialog>
+
+  <dialog id="successDialog" class="modal">
+    <div class="modal-card">
+      <div class="eyebrow">RÉSERVATION</div><h2>Parfait ! 🎉</h2>
+      <p id="successText"></p>
+      <div class="address-box">966 rue La Palme<br>Québec, Saint-Lin</div>
+      <button class="primary-btn" onclick="document.getElementById('successDialog').close()">OK</button>
+    </div>
+  </dialog>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>

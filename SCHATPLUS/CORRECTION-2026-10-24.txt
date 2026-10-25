@@ -1,0 +1,3 @@
+Correction appliquée à app.js : suppression de la seconde déclaration de realtimeChannel et de l’ancien startRealtime() branché sur questions/answers. La version conservée écoute chat_conversations et chat_messages.
+
+Cette archive corrigée n’a pas été déployée sur Vercel. La clé Mammouth doit être ajoutée directement dans les variables d’environnement Vercel et ne doit pas être partagée dans un chat.

@@ -1,0 +1,60 @@
+<!doctype html><html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>schat+ — Admin</title><link rel="stylesheet" href="styles.css"></head>
+<body>
+<div class="app-shell">
+<aside class="sidebar"><div class="brand"><span class="brand-ball">◉</span><span>schat<span>+</span></span></div><div class="menu-title">ADMIN</div>
+<button class="menu-item active" data-tab="users">👥 <span>Utilisateurs</span></button><button class="menu-item" data-tab="questions">❓ <span>Questions</span></button><button class="menu-item" data-tab="ais">🤖 <span>IA</span></button><button class="menu-item" data-tab="stats">📊 <span>Stats</span></button><button class="menu-item" data-tab="chatgpt">🧠 <span>ChatGPT Admin</span></button>
+<div class="sidebar-bottom"><a class="menu-item" href="index.html">← <span>Retour à schat+</span></a></div></aside>
+<main class="main"><header class="topbar"><div><div class="eyebrow">ESPACE PRIVÉ</div><h1>Dashboard admin</h1></div><div id="adminState" class="account-chip">Non connecté</div></header>
+<section id="adminLogin" class="auth-gate" style="position:relative;inset:auto;background:transparent"><div class="auth-card"><div class="auth-icon">🛡️</div><h2>Administration</h2><p>Connexion réservée au compte administrateur.</p><form id="loginForm" class="auth-form"><input id="email" type="email" placeholder="Email" required><input id="password" type="password" placeholder="Mot de passe" required><button class="primary-btn">Se connecter</button><div id="loginMsg"></div></form></div></section>
+<section id="dashboard" class="hidden"><div id="tab-users" class="admin-tab"></div><div id="tab-questions" class="admin-tab hidden"></div><div id="tab-ais" class="admin-tab hidden"></div><div id="tab-stats" class="admin-tab hidden"></div><div id="tab-chatgpt" class="admin-tab hidden"></div></section>
+</main></div><script type="module" src="admin.js"></script>
+<!-- SCHAT_ADMIN_AI_MANAGER -->
+<section id="schatAdminAiManager" style="margin:24px 0;padding:20px;border:1px solid #d8d8d8;border-radius:16px">
+<h2>🤖 Gestion des IA</h2>
+<p>Ajouter, modifier, activer, désactiver ou supprimer les IA.</p>
+<div id="schatAdminAiList">Chargement…</div>
+</section>
+<script type="module">
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(async()=>{
+ const cfg=await import('./supabase-config.js');
+ const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+ const sb=createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+ const host=document.getElementById('schatAdminAiList');
+ async function load(){
+  const {data,error}=await sb.from('ais').select('id,name,active,url').order('id');
+  if(error){host.innerHTML='<p>❌ '+esc(error.message)+'</p>';return;}
+  host.innerHTML=(data||[]).map(ai=>`
+   <article style="border:1px solid #ccc;border-radius:12px;padding:14px;margin:10px 0">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>🤖 ${esc(ai.name)}</strong><span>${ai.active?'🟢 Active':'🔴 Désactivée'}</span></div>
+    <div style="margin:10px 0;word-break:break-all">🔗 ${ai.url?'<a target="_blank" rel="noopener" href="'+esc(ai.url)+'">'+esc(ai.url)+'</a>':'Aucune URL'}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+     <button data-edit="${ai.id}">✏️ Modifier</button>
+     <button data-toggle="${ai.id}">${ai.active?'🔴 Désactiver':'🟢 Activer'}</button>
+     <button data-delete="${ai.id}">🗑️ Supprimer</button>
+    </div>
+   </article>`).join('')||'<p>Aucune IA.</p>';
+  host.querySelectorAll('[data-edit]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.edit);if(!ai)return;
+   const name=prompt('Nom de l’IA :',ai.name||'');if(name===null)return;
+   const url=prompt('URL de l’IA :',ai.url||'');if(url===null)return;
+   if(url&&!/^https?:\/\/\S+$/i.test(url)){alert('URL invalide');return;}
+   const r=await sb.from('ais').update({name:name.trim(),url:url.trim()||null}).eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+  host.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.toggle);if(!ai)return;
+   const r=await sb.from('ais').update({active:!ai.active}).eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+  host.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.delete);if(!ai)return;
+   if(!confirm('Supprimer « '+ai.name+' » ?'))return;
+   const r=await sb.from('ais').delete().eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+ }
+ load();
+})();
+</script>
+</body></html>

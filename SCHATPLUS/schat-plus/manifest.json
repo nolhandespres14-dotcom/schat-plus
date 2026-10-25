@@ -1,0 +1,9 @@
+{
+  "name": "schat+",
+  "short_name": "schat+",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#070b16",
+  "theme_color": "#0b1020",
+  "lang": "fr"
+}

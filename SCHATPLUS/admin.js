@@ -1,0 +1,45 @@
+import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { SUPABASE_URL, SUPABASE_ANON_KEY } from './supabase-config.js';
+const READY=Boolean(SUPABASE_URL&&SUPABASE_ANON_KEY&&SUPABASE_URL.includes('supabase.co'));
+const supabase=READY?createClient(SUPABASE_URL,SUPABASE_ANON_KEY):null;
+const $=id=>document.getElementById(id);
+const esc=v=>String(v??'').replace(/[&<>'"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',"'":'&#39;','"':'&quot;'}[c]));
+let session=null, adminRights={can_use_chatgpt:false,can_modify_site:false};
+
+document.querySelectorAll('[data-tab]').forEach(b=>b.onclick=()=>{document.querySelectorAll('.admin-tab').forEach(x=>x.classList.add('hidden'));$('tab-'+b.dataset.tab).classList.remove('hidden');document.querySelectorAll('[data-tab]').forEach(x=>x.classList.toggle('active',x===b));});
+$('loginForm').onsubmit=async e=>{e.preventDefault();if(!READY){$('loginMsg').textContent='Supabase n’est pas configuré.';return;}const {data,error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error){$('loginMsg').textContent=error.message;return;}session=data.session;await boot();};
+
+async function boot(){
+  const {data:admin,error}=await supabase.from('admin_users').select('user_id,admin_number,can_use_chatgpt,can_modify_site').eq('user_id',session.user.id).maybeSingle();
+  if(error||!admin){$('loginMsg').textContent='Ce compte n’est pas autorisé comme administrateur.';await supabase.auth.signOut();return;}
+  adminRights={can_use_chatgpt:Boolean(admin.can_use_chatgpt),can_modify_site:Boolean(admin.can_modify_site)};
+  $('adminLogin').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminState').textContent='🛡️ '+session.user.email;
+  const chatTab=document.querySelector('[data-tab="chatgpt"]');
+  if(!adminRights.can_use_chatgpt){chatTab?.remove();$('tab-chatgpt')?.remove();}
+  const jobs=[loadUsers(),loadQuestions(),loadAIs(),loadStats()];
+  if(adminRights.can_use_chatgpt) jobs.push(loadAdminChat());
+  await Promise.all(jobs);
+}
+
+async function loadUsers(){const el=$('tab-users');const [c,m]=await Promise.all([supabase.from('chat_conversations').select('user_id'),supabase.from('chat_messages').select('user_id')]);const ids=[...new Set([...(c.data||[]).map(x=>x.user_id),...(m.data||[]).map(x=>x.user_id)])];el.innerHTML='<div class="panel"><div class="eyebrow">COMPTES</div><h2>Utilisateurs actifs</h2><p class="small-note">Les comptes sont gérés par Supabase Auth.</p>'+ids.map(id=>`<div class="notice-card"><strong>${esc(id)}</strong><span>Utilisateur schat+</span></div>`).join('')+(ids.length?'':'<div class="empty-state">Aucun utilisateur avec une conversation.</div>')+'</div>';}
+async function loadQuestions(){const el=$('tab-questions');const {data,error}=await supabase.from('chat_messages').select('id,conversation_id,user_id,role,content,created_at').eq('role','user').order('created_at',{ascending:false});const rows=error?[]:(data||[]);el.innerHTML='<div class="panel"><div class="eyebrow">MODÉRATION</div><h2>Questions</h2>'+rows.map(q=>`<div class="notice-card"><div><strong>${esc(q.content)}</strong><div class="small-note">${esc(q.user_id)} · ${new Date(q.created_at).toLocaleString('fr-CA')}</div></div><button class="secondary-btn" data-del-q="${q.id}">Supprimer</button></div>`).join('')+'</div>';el.querySelectorAll('[data-del-q]').forEach(b=>b.onclick=async()=>{await supabase.from('chat_messages').delete().eq('id',b.dataset.delQ);loadQuestions();});}
+
+async function loadAIs(){
+  const el=$('tab-ais');
+  const {data,error}=await supabase.from('ai_agents').select('*').order('created_at');
+  const rows=error?[]:(data||[]);
+  if(error) console.warn('ai_agents:',error.message);
+  el.innerHTML='<div class="panel"><div class="eyebrow">MODÈLES</div><h2>IA disponibles</h2><p class="small-note">Tous les administrateurs peuvent ajouter, activer, désactiver, modifier et supprimer les IA.</p>'+rows.map(a=>`<div class="notice-card ai-admin-row"><div><strong>🤖 ${esc(a.name)}</strong><div class="small-note">${esc(a.model||'Modèle non défini')} · ${a.enabled?'🟢 Active':'🔴 Désactivée'}</div></div><div class="ai-admin-actions"><button class="primary-btn" data-ai-toggle="${a.id}">${a.enabled?'Désactiver':'Activer'}</button><button class="secondary-btn" data-ai-edit="${a.id}">Modifier</button><button class="secondary-btn" data-ai-delete="${a.id}">Supprimer</button></div></div>`).join('')+(rows.length?'':'<div class="empty-state">Aucune IA dans ai_agents.</div>')+'<form id="addAiForm" class="notice-card ai-admin-form"><strong>➕ Ajouter une IA</strong><input id="newAiName" maxlength="80" placeholder="Nom de l’IA" required><input id="newAiModel" maxlength="120" placeholder="Modèle" required><button class="primary-btn" type="submit">Ajouter</button></form></div>';
+  el.querySelectorAll('[data-ai-toggle]').forEach(b=>b.onclick=async()=>{const a=rows.find(x=>String(x.id)===b.dataset.aiToggle);if(!a)return;const {error}=await supabase.from('ai_agents').update({enabled:!a.enabled,updated_at:new Date().toISOString()}).eq('id',a.id);if(error)alert(error.message);else loadAIs();});
+  el.querySelectorAll('[data-ai-edit]').forEach(b=>b.onclick=async()=>{const a=rows.find(x=>String(x.id)===b.dataset.aiEdit);if(!a)return;const name=prompt('Nom de l’IA :',a.name);if(name===null)return;const model=prompt('Modèle :',a.model||'');if(model===null)return;const {error}=await supabase.from('ai_agents').update({name:name.trim(),model:model.trim(),updated_at:new Date().toISOString()}).eq('id',a.id);if(error)alert(error.message);else loadAIs();});
+  el.querySelectorAll('[data-ai-delete]').forEach(b=>b.onclick=async()=>{const a=rows.find(x=>String(x.id)===b.dataset.aiDelete);if(!a)return;if(!confirm(`Supprimer l’IA « ${a.name} » ?`))return;const {error}=await supabase.from('ai_agents').delete().eq('id',a.id);if(error)alert(error.message);else loadAIs();});
+  $('addAiForm').onsubmit=async e=>{e.preventDefault();const name=$('newAiName').value.trim(),model=$('newAiModel').value.trim();const {error}=await supabase.from('ai_agents').insert({name,model,enabled:true,created_by:session.user.id});if(error)alert(error.message);else{e.target.reset();loadAIs();}};
+}
+
+async function loadAdminChat(){
+  const el=$('tab-chatgpt');
+  el.innerHTML=`<div class="panel admin-chat-panel"><div class="eyebrow">CHATGPT ADMIN</div><h2>🧠 ChatGPT développeur</h2><p class="small-note">Réservé à l’Admin 1. Il peut consulter le contexte fourni du projet, analyser les données autorisées et préparer/appliquer les actions IA.</p><div id="adminChatMessages" class="admin-chat-messages"><div class="notice-card"><strong>Prêt.</strong><span>Demande par exemple : « Analyse le problème des réservations » ou « Modifie le comportement de ChatGPT ».</span></div></div><form id="adminChatForm" class="notice-card admin-chat-form"><textarea id="adminChatInput" rows=3 maxlength=8000 placeholder="Écris une demande…" required></textarea><button class="primary-btn" type="submit">Envoyer à ChatGPT</button><div id="adminChatStatus" class="small-note"></div></form></div>`;
+  $('adminChatForm').onsubmit=async e=>{e.preventDefault();const input=$('adminChatInput'),status=$('adminChatStatus'),wrap=$('adminChatMessages');const message=input.value.trim();if(!message)return;wrap.insertAdjacentHTML('beforeend',`<div class="notice-card"><strong>Toi</strong><span>${esc(message)}</span></div>`);input.value='';status.textContent='ChatGPT analyse le projet…';try{const r=await fetch('/api/admin-chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({message})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Erreur du ChatGPT Admin');wrap.insertAdjacentHTML('beforeend',`<div class="notice-card admin-chat-answer"><strong>ChatGPT Admin</strong><span>${esc(data.answer||'')}</span>${data.applied?'<small>✅ Modification appliquée.</small>':''}${data.action?`<small>Action : ${esc(data.action.type)}</small>`:''}</div>`);status.textContent=data.applied?'✅ Modification appliquée.':'Réponse reçue.';}catch(err){status.textContent='⚠️ '+err.message;}};
+}
+async function loadStats(){const [q,u,a]=await Promise.all([supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','user'),supabase.from('admin_users').select('user_id',{count:'exact',head:true}),supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','assistant')]);$('tab-stats').innerHTML='<div class="panel"><div class="eyebrow">APERÇU</div><h2>Statistiques</h2><div class="cards-grid"><div class="notice-card"><strong>Questions</strong><span>'+(q.count||0)+'</span></div><div class="notice-card"><strong>Admins</strong><span>'+(u.count||0)+'</span></div><div class="notice-card"><strong>Réponses IA</strong><span>'+(a.count||0)+'</span></div></div></div>';}
+if(READY)supabase.auth.getSession().then(r=>{session=r.data.session;if(session)boot();});

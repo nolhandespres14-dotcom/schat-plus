@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <link rel="manifest" href="manifest.json">
+  <title>schat+</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand"><span class="brand-dot">✦</span> schat+</div>
+    <div class="nav-title">MENU</div>
+    <nav id="mainNav">
+      <button class="nav-btn active" data-page="chat">💬 <span>Chat</span></button>
+      <button class="nav-btn" data-page="ais">🤖 <span>IA</span></button>
+      <button class="nav-btn" data-page="pokeplex">🃏 <span>Poképléx</span></button>
+      <button class="nav-btn" data-page="history">🕘 <span>Historique</span></button>
+      <button class="nav-btn" data-page="profile">👤 <span>Profil</span></button>
+    </nav>
+    <div class="sidebar-bottom">
+      <a class="admin-link" href="admin.html">🛡️ Administration</a>
+    </div>
+  </aside>
+
+  <main class="main">
+    <header class="topbar">
+      <button id="mobileMenu" class="icon-btn">☰</button>
+      <div>
+        <div class="eyebrow" id="pageEyebrow">ESPACE IA</div>
+        <h1 id="pageTitle">Chat</h1>
+      </div>
+      <div class="user-pill"><span class="online"></span><span id="userName">Nolhan</span></div>
+    </header>
+
+    <section class="content">
+      <section id="page-chat" class="page">
+        <div class="hero">
+          <div>
+            <span class="badge">schat+ • comparaison IA</span>
+            <h2>Pose une question.<br><span>Compare les IA.</span></h2>
+            <p>Une seule question, plusieurs IA. Sélectionne une question à gauche et change d’IA sans la recopier.</p>
+          </div>
+        </div>
+
+        <div class="workspace">
+          <aside class="question-panel panel">
+            <div class="panel-head">
+              <div><h3>Tes questions</h3><p>Ton historique</p></div>
+              <span class="count" id="questionCount">0</span>
+            </div>
+            <div id="questionList" class="question-list empty">Aucune question pour le moment.</div>
+          </aside>
+
+          <section class="answer-panel panel">
+            <div class="panel-head">
+              <div><h3 id="answerTitle">Réponse</h3><p id="activeQuestion">Sélectionne une question puis une IA.</p></div>
+              <span id="activeAI" class="ai-tag">Aucune IA</span>
+            </div>
+            <div id="answerBox" class="answer-box empty-answer">
+              <div class="big-icon">✦</div>
+              <h3>Prêt à comparer</h3>
+              <p>Écris une question en bas, puis choisis une IA.</p>
+            </div>
+          </section>
+
+          <aside class="ai-panel panel">
+            <div class="panel-head">
+              <div><h3>Choisis une IA</h3><p>IA actives</p></div>
+            </div>
+            <div id="aiList" class="ai-list"></div>
+          </aside>
+        </div>
+
+        <div class="composer panel">
+          <textarea id="questionInput" rows="2" placeholder="Pose une question…"></textarea>
+          <div class="composer-bottom">
+            <span class="hint">Entrée pour envoyer • Maj + Entrée pour une nouvelle ligne</span>
+            <button id="sendBtn" class="primary">Envoyer <span>➜</span></button>
+          </div>
+        </div>
+      </section>
+
+      <section id="page-ais" class="page hidden">
+        <div class="page-heading"><span class="badge">IA</span><h2>Toutes les IA</h2><p>Les IA activées par l’administration apparaissent ici.</p></div>
+        <div id="allAIGrid" class="grid"></div>
+      </section>
+
+      <section id="page-pokeplex" class="page hidden">
+        <div class="page-heading"><span class="badge poke-badge">POKÉPLÉX</span><h2>Poképléx</h2><p>Ton espace Poképléx directement au milieu de schat+.</p></div>
+        <div class="poke-shell">
+          <div class="poke-top"><strong>🃏 Poképléx</strong><span>Marché Pokémon</span></div>
+          <div class="poke-grid">
+            <div class="poke-card"><div class="poke-art">⚡</div><strong>Pikachu</strong><small>Carte Pokémon</small><b>À vendre</b></div>
+            <div class="poke-card"><div class="poke-art">🔥</div><strong>Dracaufeu</strong><small>Carte Pokémon</small><b>À vendre</b></div>
+            <div class="poke-card"><div class="poke-art">🌊</div><strong>Carapuce</strong><small>Carte Pokémon</small><b>À vendre</b></div>
+          </div>
+          <button class="primary wide" id="openPokeplex">Ouvrir Poképléx</button>
+        </div>
+      </section>
+
+      <section id="page-history" class="page hidden">
+        <div class="page-heading"><span class="badge">HISTORIQUE</span><h2>Historique</h2><p>Toutes tes questions de cette session.</p></div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <section id="page-profile" class="page hidden">
+        <div class="page-heading"><span class="badge">PROFIL</span><h2>Ton profil</h2><p>Gère les informations de ton compte.</p></div>
+        <div class="profile-card panel">
+          <div class="avatar">N</div>
+          <div><h3 id="profileName">Nolhan</h3><p>Utilisateur schat+</p></div>
+        </div>
+      </section>
+    </section>
+  </main>
+</div>
+<script type="module" src="app.js"></script>
+</body>
+</html>

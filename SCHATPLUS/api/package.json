@@ -1,0 +1,7 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.57.4",
+    "express": "^5.1.0"
+  }
+}

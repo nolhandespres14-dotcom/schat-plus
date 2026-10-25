@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="theme-color" content="#0b1020"><title>schat+ • Admin</title><link rel="stylesheet" href="style.css"></head>
+<body><div class="app"><aside class="sidebar"><div class="brand"><span class="brand-dot">✦</span> schat+</div><div class="nav-title">ADMIN</div><nav><a class="admin-link" href="index.html">💬 Retour au chat</a><button class="nav-btn active" data-tab="users">👥 <span>Utilisateurs</span></button><button class="nav-btn" data-tab="questions">❓ <span>Questions</span></button><button class="nav-btn" data-tab="ais">🤖 <span>IA</span></button><button class="nav-btn" data-tab="stats">📊 <span>Stats</span></button></nav></aside>
+<main class="main"><header class="topbar"><div><div class="eyebrow">ADMINISTRATION</div><h1 id="adminTitle">Utilisateurs</h1></div><div class="user-pill">🛡️ Admin <button id="adminLogout" class="mini-btn">Déconnexion</button></div></header><section class="content">
+<section id="admin-users" class="admin-page"><div class="page-heading"><span class="badge">ADMIN</span><h2>Utilisateurs</h2><p>Gestion des comptes du prototype.</p></div><div id="usersTable" class="history-list"></div></section>
+<section id="admin-questions" class="admin-page hidden"><div class="page-heading"><span class="badge">ADMIN</span><h2>Questions</h2><p>Voir et supprimer les questions enregistrées.</p></div><div id="adminQuestions" class="history-list"></div></section>
+<section id="admin-ais" class="admin-page hidden"><div class="page-heading"><span class="badge">ADMIN</span><h2>IA</h2><p>Active, désactive ou ajoute une IA.</p></div><div class="panel" style="padding:18px;margin-bottom:14px;display:flex;gap:8px;flex-wrap:wrap"><input id="newAI" placeholder="Nom de la nouvelle IA" style="flex:1;min-width:220px;background:#0b1222;border:1px solid #293957;border-radius:10px;padding:11px;color:#fff"><button id="addAI" class="primary">+ Ajouter une IA</button></div><div id="adminAIs" class="grid"></div></section>
+<section id="admin-stats" class="admin-page hidden"><div class="page-heading"><span class="badge">ADMIN</span><h2>Statistiques</h2><p>Résumé du prototype.</p></div><div id="statsGrid" class="grid"></div></section>
+</section></main></div><script src="admin.js"></script><script>document.getElementById("adminLogout").onclick=()=>{localStorage.removeItem("schat_plus_session_v1");location.href="login.html"}</script>
+<!-- SCHAT_ADMIN_AI_MANAGER -->
+<section id="schatAdminAiManager" style="margin:24px 0;padding:20px;border:1px solid #d8d8d8;border-radius:16px">
+<h2>🤖 Gestion des IA</h2>
+<p>Ajouter, modifier, activer, désactiver ou supprimer les IA.</p>
+<div id="schatAdminAiList">Chargement…</div>
+</section>
+<script type="module">
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(async()=>{
+ const cfg=await import('./supabase-config.js');
+ const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+ const sb=createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY);
+ const host=document.getElementById('schatAdminAiList');
+ async function load(){
+  const {data,error}=await sb.from('ais').select('id,name,active,url').order('id');
+  if(error){host.innerHTML='<p>❌ '+esc(error.message)+'</p>';return;}
+  host.innerHTML=(data||[]).map(ai=>`
+   <article style="border:1px solid #ccc;border-radius:12px;padding:14px;margin:10px 0">
+    <div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>🤖 ${esc(ai.name)}</strong><span>${ai.active?'🟢 Active':'🔴 Désactivée'}</span></div>
+    <div style="margin:10px 0;word-break:break-all">🔗 ${ai.url?'<a target="_blank" rel="noopener" href="'+esc(ai.url)+'">'+esc(ai.url)+'</a>':'Aucune URL'}</div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+     <button data-edit="${ai.id}">✏️ Modifier</button>
+     <button data-toggle="${ai.id}">${ai.active?'🔴 Désactiver':'🟢 Activer'}</button>
+     <button data-delete="${ai.id}">🗑️ Supprimer</button>
+    </div>
+   </article>`).join('')||'<p>Aucune IA.</p>';
+  host.querySelectorAll('[data-edit]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.edit);if(!ai)return;
+   const name=prompt('Nom de l’IA :',ai.name||'');if(name===null)return;
+   const url=prompt('URL de l’IA :',ai.url||'');if(url===null)return;
+   if(url&&!/^https?:\/\/\S+$/i.test(url)){alert('URL invalide');return;}
+   const r=await sb.from('ais').update({name:name.trim(),url:url.trim()||null}).eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+  host.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.toggle);if(!ai)return;
+   const r=await sb.from('ais').update({active:!ai.active}).eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+  host.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{
+   const ai=data.find(x=>String(x.id)===b.dataset.delete);if(!ai)return;
+   if(!confirm('Supprimer « '+ai.name+' » ?'))return;
+   const r=await sb.from('ais').delete().eq('id',ai.id);
+   if(r.error)alert(r.error.message);else load();
+  });
+ }
+ load();
+})();
+</script>
+<!-- SCHAT_AI_MANAGER_ROOT_FINAL2 -->
+<section id="schatAiManagerRoot" style="margin:24px 0;padding:20px;border:1px solid #ddd;border-radius:16px">
+<h2>🤖 Gestion des IA</h2><p>Gérer les IA connectées à schat+.</p><div id="schatAiManagerRootList">Chargement…</div>
+</section>
+<script type="module">
+const esc=v=>String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+(async()=>{try{
+const cfg=await import('./../supabase-config.js').catch(()=>import('./supabase-config.js'));
+const {createClient}=await import('https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm');
+const sb=createClient(cfg.SUPABASE_URL,cfg.SUPABASE_ANON_KEY),host=document.getElementById('schatAiManagerRootList');
+async function load(){const {data,error}=await sb.from('ais').select('id,name,active,url').order('id');if(error){host.innerHTML='<p>❌ '+esc(error.message)+'</p>';return}
+host.innerHTML=(data||[]).map(ai=>`<article style="padding:16px;margin:10px 0;border:1px solid #ccc;border-radius:12px"><div style="display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap"><strong>🤖 ${esc(ai.name||'IA')}</strong><span>${ai.active?'🟢 Active':'🔴 Désactivée'}</span></div><div style="margin:10px 0;word-break:break-all">🔗 ${ai.url?'<a href="'+esc(ai.url)+'" target="_blank" rel="noopener">'+esc(ai.url)+'</a>':'Aucune URL'}</div><div style="display:flex;gap:8px;flex-wrap:wrap"><button data-edit="${ai.id}">✏️ Modifier</button><button data-toggle="${ai.id}">${ai.active?'🔴 Désactiver':'🟢 Activer'}</button><button data-delete="${ai.id}">🗑️ Supprimer</button></div></article>`).join('')||'<p>Aucune IA.</p>';
+host.querySelectorAll('[data-edit]').forEach(b=>b.onclick=async()=>{const ai=data.find(x=>String(x.id)===b.dataset.edit);if(!ai)return;const name=prompt('Nom de l’IA :',ai.name||'');if(name===null)return;const url=prompt('URL de l’IA :',ai.url||'');if(url===null)return;if(url&&!/^https?:\/\/\S+$/i.test(url)){alert('URL invalide');return}const r=await sb.from('ais').update({name:name.trim(),url:url.trim()||null}).eq('id',ai.id);if(r.error)alert(r.error.message);else load()});
+host.querySelectorAll('[data-toggle]').forEach(b=>b.onclick=async()=>{const ai=data.find(x=>String(x.id)===b.dataset.toggle);if(!ai)return;const r=await sb.from('ais').update({active:!ai.active}).eq('id',ai.id);if(r.error)alert(r.error.message);else load()});
+host.querySelectorAll('[data-delete]').forEach(b=>b.onclick=async()=>{const ai=data.find(x=>String(x.id)===b.dataset.delete);if(!ai)return;if(!confirm('Supprimer « '+ai.name+' » ?'))return;const r=await sb.from('ais').delete().eq('id',ai.id);if(r.error)alert(r.error.message);else load()});}load()}catch(e){console.error(e)}})();
+</script></body></html>

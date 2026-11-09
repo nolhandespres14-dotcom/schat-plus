@@ -15,8 +15,8 @@ let currentUser = null;
 let state={questions:[],ais:defaultAIs,user:{username:'Utilisateur'}};
 function save(){localStorage.setItem(STORAGE_KEY,JSON.stringify(state))}
 async function initAuth(){
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){location.href='login.html';return false;}
+ const {data:{session},error:sessionError}=await supabase.auth.getSession();
+ if(sessionError || !session){location.href='login.html';return false;}
  currentUser=session.user;
  const {data:profile}=await supabase.from('profiles').select('username,role,banned').eq('id',currentUser.id).single();
  if(profile?.banned){await supabase.auth.signOut();location.href='login.html';return false;}
@@ -65,7 +65,15 @@ async function selectAI(id){
  $("#answerBox").textContent=`${a.icon} ${a.name} réfléchit…`;
  renderAIs();
  try{
-   const r=await fetch('../api/ai',{method:'POST',headers:{'Content-Type':'application/json', ...(session?.access_token ? {Authorization:`Bearer ${session.access_token}`} : {})},body:JSON.stringify({ai:a.name,question:q.text})});
+   // Récupère la session la plus récente : Supabase peut renouveler le jeton automatiquement.
+   const {data:{session:activeSession},error:sessionError}=await supabase.auth.getSession();
+   if(sessionError || !activeSession?.access_token){
+     $("#answerBox").textContent="Ta session a expiré. Reconnecte-toi pour continuer.";
+     await supabase.auth.signOut();
+     location.href='login.html';
+     return;
+   }
+   const r=await fetch('/api/ai',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${activeSession.access_token}`},body:JSON.stringify({ai:a.name,question:q.text})});
    const data=await r.json();
    if(!r.ok) throw new Error(data?.error||'Impossible d’obtenir une réponse.');
    const answerText=data.answer||'Aucune réponse reçue.';

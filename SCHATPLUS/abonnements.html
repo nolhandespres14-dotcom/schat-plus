@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c3b">
+  <meta name="description" content="Découvre les cinq offres schat+.">
+  <title>Abonnements — schat+</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="subscription-page" data-page="plans">
+  <header class="subscription-header">
+    <a class="brand subscription-brand" href="index.html"><span class="brand-ball">◉</span><span>schat<span>+</span></span></a>
+    <nav><a href="index.html">Retour au chat</a><a href="mon-abonnement.html">Mon abonnement</a></nav>
+  </header>
+  <main class="subscription-main">
+    <div class="eyebrow">LES OFFRES SCHAT+</div>
+    <h1>Choisis ton abonnement</h1>
+    <p class="subscription-intro">Cinq offres, du démarrage gratuit à SCHAT+ MASTER.</p>
+    <div id="subscriptionAccount" class="subscription-note">Chargement du compte…</div>
+    <div id="plansGrid" class="plans-grid" aria-live="polite"></div>
+    <div class="subscription-notice">
+      <strong>À savoir avant de choisir</strong>
+      <p>Les limites précises et les fonctionnalités incluses dans chaque offre restent à finaliser. Le choix d’une offre payante enregistre une demande, mais ne déclenche aucun paiement et n’active pas l’accès payant. Les paiements ne seront ouverts qu’après configuration et vérification du système de paiement par le responsable du compte.</p>
+    </div>
+    <p id="subscriptionMessage" class="subscription-message" role="status"></p>
+  </main>
+  <script type="module" src="subscriptions.js"></script>
+</body>
+</html>

@@ -55,3 +55,8 @@ Le module est ajouté sur une branche de travail et ne modifie pas le dépôt Po
 Le schéma principal de l’application est ajouté par `supabase/migrations/20261113000000_core_schatplus_tables.sql` : agents IA, conversations, messages, catalogue de cartes et réservations. Cette migration crée des tables neuves dans le projet Supabase schat+; elle ne modifie pas la base Poképlex d’origine et ne copie aucune donnée de réservation personnelle.
 
 La migration `supabase/migrations/20261113000100_subscription_indexes.sql` ajoute les index et évite plusieurs demandes de paiement simultanées pour un même compte.
+
+
+## Activation des administrateurs
+
+La base schat+ ne contenait aucun des trois comptes administrateurs dans Supabase Auth lors de la mise en place. Après la création/inscription des trois comptes dans **le projet Supabase schat-plus**, exécuter `supabase/manual/seed_admins_after_signup.sql` pour attribuer les rôles. Le premier compte reçoit seul les droits ChatGPT Admin spécial et modification du site. Ne partage jamais de mot de passe ni de clé secrète dans un chat.

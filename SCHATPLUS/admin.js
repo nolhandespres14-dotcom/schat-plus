@@ -16,7 +16,7 @@ async function boot(){
   $('adminLogin').classList.add('hidden');$('dashboard').classList.remove('hidden');$('adminState').textContent='🛡️ '+session.user.email;
   const chatTab=document.querySelector('[data-tab="chatgpt"]');
   if(!adminRights.can_use_chatgpt){chatTab?.remove();$('tab-chatgpt')?.remove();}
-  const jobs=[loadUsers(),loadQuestions(),loadAIs(),loadStats()];
+  const jobs=[loadUsers(),loadQuestions(),loadAIs(),loadStats(),loadSubscriptions()];
   if(adminRights.can_use_chatgpt) jobs.push(loadAdminChat());
   await Promise.all(jobs);
 }
@@ -41,5 +41,24 @@ async function loadAdminChat(){
   el.innerHTML=`<div class="panel admin-chat-panel"><div class="eyebrow">CHATGPT ADMIN</div><h2>🧠 ChatGPT développeur</h2><p class="small-note">Réservé à l’Admin 1. Il peut consulter le contexte fourni du projet, analyser les données autorisées et préparer/appliquer les actions IA.</p><div id="adminChatMessages" class="admin-chat-messages"><div class="notice-card"><strong>Prêt.</strong><span>Demande par exemple : « Analyse le problème des réservations » ou « Modifie le comportement de ChatGPT ».</span></div></div><form id="adminChatForm" class="notice-card admin-chat-form"><textarea id="adminChatInput" rows=3 maxlength=8000 placeholder="Écris une demande…" required></textarea><button class="primary-btn" type="submit">Envoyer à ChatGPT</button><div id="adminChatStatus" class="small-note"></div></form></div>`;
   $('adminChatForm').onsubmit=async e=>{e.preventDefault();const input=$('adminChatInput'),status=$('adminChatStatus'),wrap=$('adminChatMessages');const message=input.value.trim();if(!message)return;wrap.insertAdjacentHTML('beforeend',`<div class="notice-card"><strong>Toi</strong><span>${esc(message)}</span></div>`);input.value='';status.textContent='ChatGPT analyse le projet…';try{const r=await fetch('/api/admin-chat',{method:'POST',headers:{'Content-Type':'application/json',Authorization:`Bearer ${session.access_token}`},body:JSON.stringify({message})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.error||'Erreur du ChatGPT Admin');wrap.insertAdjacentHTML('beforeend',`<div class="notice-card admin-chat-answer"><strong>ChatGPT Admin</strong><span>${esc(data.answer||'')}</span>${data.applied?'<small>✅ Modification appliquée.</small>':''}${data.action?`<small>Action : ${esc(data.action.type)}</small>`:''}</div>`);status.textContent=data.applied?'✅ Modification appliquée.':'Réponse reçue.';}catch(err){status.textContent='⚠️ '+err.message;}};
 }
+async function loadSubscriptions(){
+  const el=$('tab-subscriptions');
+  const [subscriptions,cancellations]=await Promise.all([
+    supabase.from('user_subscriptions').select('id,user_id,plan_code,status,created_at,current_period_end').order('created_at',{ascending:false}).limit(200),
+    supabase.from('subscription_cancellation_requests').select('id,user_id,subscription_id,status,created_at').order('created_at',{ascending:false}).limit(200)
+  ]);
+  if(subscriptions.error||cancellations.error){
+    el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Gestion des abonnements</h2><p class="small-note">Les tables ne sont pas encore disponibles. Applique la migration <code>supabase/migrations/20261112000000_subscriptions.sql</code>.</p></div>';
+    return;
+  }
+  const rows=subscriptions.data||[];
+  const requests=cancellations.data||[];
+  el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Demandes et offres</h2><p class="small-note">Les demandes payantes restent en attente jusqu’à confirmation du paiement. Cette page ne permet pas d’activer un abonnement manuellement.</p>'+
+    (rows.map(row=>'<div class="notice-card"><div><strong>'+esc(row.plan_code)+' · '+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · '+new Date(row.created_at).toLocaleString('fr-CA')+'</div></div></div>').join('')||'<div class="empty-state">Aucun abonnement enregistré.</div>')+
+    '<h3>Demandes d’annulation</h3>'+
+    (requests.map(row=>'<div class="notice-card"><div><strong>'+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · Demande : '+new Date(row.created_at).toLocaleString('fr-CA')+'</div></div></div>').join('')||'<div class="empty-state">Aucune demande d’annulation.</div>')+
+    '</div>';
+}
+
 async function loadStats(){const [q,u,a]=await Promise.all([supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','user'),supabase.from('admin_users').select('user_id',{count:'exact',head:true}),supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','assistant')]);$('tab-stats').innerHTML='<div class="panel"><div class="eyebrow">APERÇU</div><h2>Statistiques</h2><div class="cards-grid"><div class="notice-card"><strong>Questions</strong><span>'+(q.count||0)+'</span></div><div class="notice-card"><strong>Admins</strong><span>'+(u.count||0)+'</span></div><div class="notice-card"><strong>Réponses IA</strong><span>'+(a.count||0)+'</span></div></div></div>';}
 if(READY)supabase.auth.getSession().then(r=>{session=r.data.session;if(session)boot();});

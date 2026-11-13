@@ -18,3 +18,36 @@
 
 .admin-chat-panel{min-height:520px}.admin-chat-messages{display:grid;gap:10px;max-height:480px;overflow:auto;margin:18px 0}.admin-chat-form{display:grid;gap:10px}.admin-chat-form textarea{width:100%;min-height:90px;padding:12px;border:1px solid #cdd7e6;border-radius:12px;font:inherit;background:#fff}.admin-chat-answer{border-left:4px solid #1264d9}.admin-chat-answer span{white-space:pre-wrap}.admin-chat-answer small{display:block;margin-top:8px;color:#69758a}
 .ai-admin-row{align-items:center}.ai-admin-actions{display:flex;gap:8px;flex-wrap:wrap}.ai-admin-form input{flex:1;min-width:180px}@media(max-width:700px){.ai-admin-actions{width:100%}.ai-admin-actions button{flex:1}}
+
+/* Abonnements schat+ */
+.subscription-page{min-height:100vh;background:var(--paper)}
+.subscription-header{display:flex;align-items:center;justify-content:space-between;padding:18px max(20px,calc((100vw - 1280px)/2));background:#fff;border-bottom:1px solid var(--line)}
+.subscription-header nav{display:flex;gap:18px;flex-wrap:wrap;font-weight:800;color:var(--muted)}
+.subscription-header nav a:hover{color:var(--blue)}
+.subscription-brand{padding:0;font-size:23px;color:var(--ink)}
+.subscription-main{max-width:1280px;margin:0 auto;padding:54px 24px}
+.subscription-main h1{font-size:clamp(32px,5vw,48px);margin:0 0 8px;color:var(--navy)}
+.subscription-intro{font-size:18px;color:var(--muted);margin-bottom:24px}
+.subscription-note,.subscription-notice,.subscription-detail{background:#fff;border:1px solid var(--line);border-radius:18px;padding:18px;margin:18px 0}
+.plans-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:16px;margin:24px 0}
+.plan-card{display:flex;flex-direction:column;gap:12px;padding:22px;background:#fff;border:1px solid var(--line);border-radius:20px;box-shadow:0 8px 28px rgba(16,28,59,.06)}
+.plan-featured{border:2px solid var(--blue);box-shadow:0 12px 32px rgba(18,100,217,.12)}
+.plan-code{font-size:11px;letter-spacing:.14em;font-weight:950;color:var(--blue)}
+.plan-card h2{font-size:21px;margin:0}
+.plan-price{font-size:25px;font-weight:950;color:var(--navy)}
+.plan-card p{color:var(--muted);margin:0;min-height:42px}
+.plan-inclusions{font-size:13px;line-height:1.5;color:var(--muted);background:#f7f9fc;padding:12px;border-radius:12px;flex:1}
+.plan-select{width:100%;margin-top:4px}
+.plan-select:disabled{opacity:.65;cursor:default}
+.subscription-notice{border-left:4px solid var(--blue)}
+.subscription-notice p{margin:8px 0 0;color:var(--muted);line-height:1.6}
+.subscription-message{min-height:24px;font-weight:800;color:var(--blue)}
+.subscription-detail{max-width:760px;padding:26px}
+.subscription-detail h2{font-size:25px}
+.subscription-detail h3{margin-top:24px}
+.subscription-status{margin-bottom:12px}
+.status-pill{display:inline-block;padding:6px 11px;border-radius:999px;background:#eef4ff;color:var(--blue);font-size:12px;font-weight:900}
+.subscription-row{display:flex;justify-content:space-between;gap:12px;padding:12px 0;border-bottom:1px solid var(--line)}
+.subscription-row span,.small-note{color:var(--muted);font-size:13px}
+.subscription-actions{display:flex;gap:10px;flex-wrap:wrap}
+@media(max-width:700px){.subscription-header{align-items:flex-start;gap:12px;flex-direction:column}.subscription-main{padding:32px 16px}.subscription-row{flex-direction:column}}

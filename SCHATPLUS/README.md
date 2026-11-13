@@ -51,3 +51,7 @@ Le catalogue comprend V1 gratuite, V2 (20 $ CA/mois), V3 Emergent (30 $ CA/mois)
 La migration `supabase/migrations/20261112000000_subscriptions.sql` ajoute les tables et les règles RLS. Les demandes payantes restent `pending_payment` : aucune offre payante ne devient active par un simple clic. Le paiement récurrent, la confirmation par webhook et la résiliation automatique ne sont pas activés; ils nécessitent un fournisseur de paiement choisi et configuré par un adulte responsable. Les fonctionnalités exactes et les quotas des offres doivent être définis avant d'ouvrir la vente.
 
 Le module est ajouté sur une branche de travail et ne modifie pas le dépôt Poképlex.
+
+Le schéma principal de l’application est ajouté par `supabase/migrations/20261113000000_core_schatplus_tables.sql` : agents IA, conversations, messages, catalogue de cartes et réservations. Cette migration crée des tables neuves dans le projet Supabase schat+; elle ne modifie pas la base Poképlex d’origine et ne copie aucune donnée de réservation personnelle.
+
+La migration `supabase/migrations/20261113000100_subscription_indexes.sql` ajoute les index et évite plusieurs demandes de paiement simultanées pour un même compte.

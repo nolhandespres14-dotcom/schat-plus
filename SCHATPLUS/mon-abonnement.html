@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#101c3b">
+  <title>Mon abonnement — schat+</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="subscription-page" data-page="account">
+  <header class="subscription-header">
+    <a class="brand subscription-brand" href="index.html"><span class="brand-ball">◉</span><span>schat<span>+</span></span></a>
+    <nav><a href="index.html">Retour au chat</a><a href="abonnements.html">Voir les offres</a></nav>
+  </header>
+  <main class="subscription-main">
+    <div class="eyebrow">ESPACE PERSONNEL</div>
+    <h1>Mon abonnement</h1>
+    <p class="subscription-intro">Consulte ton offre et les demandes en cours.</p>
+    <div id="subscriptionAccount" class="subscription-note">Chargement du compte…</div>
+    <section id="subscriptionDetails" class="subscription-detail panel" aria-live="polite">Chargement…</section>
+    <div class="subscription-actions"><a class="primary-btn" href="abonnements.html">Comparer les offres</a><a class="secondary-btn" href="index.html">Retour au chat</a></div>
+    <p id="subscriptionMessage" class="subscription-message" role="status"></p>
+  </main>
+  <script type="module" src="subscriptions.js"></script>
+</body>
+</html>

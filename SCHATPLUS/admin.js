@@ -43,21 +43,33 @@ async function loadAdminChat(){
 }
 async function loadSubscriptions(){
   const el=$('tab-subscriptions');
-  const [subscriptions,cancellations]=await Promise.all([
+  const [plans,subscriptions,cancellations]=await Promise.all([
+    supabase.from('subscription_plans').select('code,name,monthly_price_cents,currency,active').order('code'),
     supabase.from('user_subscriptions').select('id,user_id,plan_code,status,created_at,current_period_end').order('created_at',{ascending:false}).limit(200),
     supabase.from('subscription_cancellation_requests').select('id,user_id,subscription_id,status,created_at').order('created_at',{ascending:false}).limit(200)
   ]);
-  if(subscriptions.error||cancellations.error){
-    el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Gestion des abonnements</h2><p class="small-note">Les tables ne sont pas encore disponibles. Applique la migration <code>supabase/migrations/20261112000000_subscriptions.sql</code>.</p></div>';
+  if(plans.error||subscriptions.error||cancellations.error){
+    el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Gestion des abonnements</h2><p class="small-note">Impossible de charger une ou plusieurs tables. Vérifie les migrations Supabase et les droits de lecture.</p></div>';
     return;
   }
+  const money=(cents,currency)=>new Intl.NumberFormat('fr-CA',{style:'currency',currency:currency||'CAD',maximumFractionDigits:0}).format((cents||0)/100);
+  const planRows=(plans.data||[]).map(p=>'<div class="notice-card"><div><strong>'+esc(p.code)+' · '+esc(p.name)+'</strong><div class="small-note">'+(p.monthly_price_cents===0?'Gratuit':money(p.monthly_price_cents,p.currency)+' / mois')+' · '+(p.active?'Offre visible':'Offre masquée')+'</div></div></div>').join('');
   const rows=subscriptions.data||[];
   const requests=cancellations.data||[];
-  el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Demandes et offres</h2><p class="small-note">Les demandes payantes restent en attente jusqu’à confirmation du paiement. Cette page ne permet pas d’activer un abonnement manuellement.</p>'+
-    (rows.map(row=>'<div class="notice-card"><div><strong>'+esc(row.plan_code)+' · '+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · '+new Date(row.created_at).toLocaleString('fr-CA')+'</div></div></div>').join('')||'<div class="empty-state">Aucun abonnement enregistré.</div>')+
+  el.innerHTML='<div class="panel"><div class="eyebrow">ABONNEMENTS</div><h2>Offres et abonnés</h2><p class="small-note">Les paiements ne sont pas encore connectés. Ne marque pas une offre payante comme active sans confirmation serveur d’un paiement réel.</p><h3>Catalogue</h3>'+
+    (planRows||'<div class="empty-state">Aucune offre configurée.</div>')+
+    '<h3>Abonnements utilisateurs</h3>'+
+    (rows.map(row=>'<div class="notice-card"><div><strong>'+esc(row.plan_code)+' · '+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · '+new Date(row.created_at).toLocaleString('fr-CA')+(row.current_period_end?' · Fin de période : '+new Date(row.current_period_end).toLocaleDateString('fr-CA'):'')+'</div></div></div>').join('')||'<div class="empty-state">Aucun abonnement enregistré.</div>')+
     '<h3>Demandes d’annulation</h3>'+
-    (requests.map(row=>'<div class="notice-card"><div><strong>'+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · Demande : '+new Date(row.created_at).toLocaleString('fr-CA')+'</div></div></div>').join('')||'<div class="empty-state">Aucune demande d’annulation.</div>')+
+    (requests.map(row=>'<div class="notice-card"><div><strong>'+esc(row.status)+'</strong><div class="small-note">Utilisateur : '+esc(row.user_id)+' · Demande : '+new Date(row.created_at).toLocaleString('fr-CA')+'</div></div>'+(row.status==='requested'?'<button class="secondary-btn" data-complete-cancel="'+esc(row.id)+'">Confirmer la résiliation</button>':'')+'</div>').join('')||'<div class="empty-state">Aucune demande d’annulation.</div>')+
     '</div>';
+  el.querySelectorAll('[data-complete-cancel]').forEach(button=>button.addEventListener('click',async()=>{
+    if(!confirm('Confirmer la résiliation de cet abonnement ? Cette action désactivera l’abonnement payant.'))return;
+    button.disabled=true;
+    const {error}=await supabase.rpc('admin_complete_subscription_cancellation',{p_request_id:button.dataset.completeCancel});
+    if(error){alert('La résiliation n’a pas été appliquée : '+error.message);button.disabled=false;return;}
+    await loadSubscriptions();
+  }));
 }
 
 async function loadStats(){const [q,u,a]=await Promise.all([supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','user'),supabase.from('admin_users').select('user_id',{count:'exact',head:true}),supabase.from('chat_messages').select('id',{count:'exact',head:true}).eq('role','assistant')]);$('tab-stats').innerHTML='<div class="panel"><div class="eyebrow">APERÇU</div><h2>Statistiques</h2><div class="cards-grid"><div class="notice-card"><strong>Questions</strong><span>'+(q.count||0)+'</span></div><div class="notice-card"><strong>Admins</strong><span>'+(u.count||0)+'</span></div><div class="notice-card"><strong>Réponses IA</strong><span>'+(a.count||0)+'</span></div></div></div>';}

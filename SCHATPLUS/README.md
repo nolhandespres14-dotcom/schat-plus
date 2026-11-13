@@ -42,3 +42,12 @@ Les clés OpenAI restent uniquement dans les variables d’environnement du serv
 - Maximum : 3 administrateurs.
 
 Le ChatGPT Admin est protégé côté serveur par le champ `can_use_chatgpt` de `admin_users`. Les clés OpenAI doivent rester dans les variables d'environnement Vercel et ne doivent jamais être placées dans le navigateur.
+
+
+## Abonnements schat+
+
+Le catalogue comprend V1 gratuite, V2 (20 $ CA/mois), V3 Emergent (30 $ CA/mois), V4 Lovable (40 $ CA/mois) et V5 SCHAT+ MASTER (50 $ CA/mois). Les pages `abonnements.html` et `mon-abonnement.html` permettent de consulter les offres, de créer une demande et de demander une annulation.
+
+La migration `supabase/migrations/20261112000000_subscriptions.sql` ajoute les tables et les règles RLS. Les demandes payantes restent `pending_payment` : aucune offre payante ne devient active par un simple clic. Le paiement récurrent, la confirmation par webhook et la résiliation automatique ne sont pas activés; ils nécessitent un fournisseur de paiement choisi et configuré par un adulte responsable. Les fonctionnalités exactes et les quotas des offres doivent être définis avant d'ouvrir la vente.
+
+Le module est ajouté sur une branche de travail et ne modifie pas le dépôt Poképlex.

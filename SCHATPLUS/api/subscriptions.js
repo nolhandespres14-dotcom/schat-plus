@@ -53,8 +53,16 @@ export default async function handler(req, res) {
     if ((existing || []).some((row) => row.status === "active" && row.plan_code === plan.code)) {
       return send(res, 200, { message: "Cette offre est déjà active." });
     }
-    if ((existing || []).some((row) => row.status === "pending_payment" && row.plan_code === plan.code)) {
+    const pendingRequest = (existing || []).find((row) => row.status === "pending_payment");
+    if (pendingRequest && pendingRequest.plan_code === plan.code) {
       return send(res, 200, { message: "Une demande pour cette offre est déjà en attente." });
+    }
+    if (pendingRequest) {
+      return send(res, 409, { error: "Tu as déjà une demande de paiement en attente. Termine-la ou contacte l’administration avant d’en choisir une autre." });
+    }
+    const activePaid = (existing || []).find((row) => row.status === "active" && row.plan_code !== "V1");
+    if (!plan.paid && activePaid) {
+      return send(res, 409, { error: "Pour revenir à l’offre gratuite, demande d’abord l’annulation de ton abonnement payant actif." });
     }
     const status = plan.paid ? "pending_payment" : "active";
     const { error } = await supabase.from("user_subscriptions").insert({
